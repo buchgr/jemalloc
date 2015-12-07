@@ -34,7 +34,11 @@ pages_map(void *addr, size_t size)
 		 */
 		pages_unmap(ret, size);
 		ret = NULL;
-	}
+        }
+        
+        if (ret != NULL) {
+            madvise(ret, size, MADV_HUGEPAGE);
+        }
 #endif
 	assert(ret == NULL || (addr == NULL && ret != addr)
 	    || (addr != NULL && ret == addr));
