@@ -6,6 +6,7 @@
 
 const char	*opt_dss = DSS_DEFAULT;
 size_t		opt_lg_chunk = 0;
+size_t      rss = 0;
 
 /* Used exclusively for gdump triggering. */
 static size_t	curchunks;

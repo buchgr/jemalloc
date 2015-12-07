@@ -48,6 +48,9 @@ extern size_t		chunk_npages;
 
 extern const chunk_hooks_t	chunk_hooks_default;
 
+// resident set size
+extern size_t rss;
+
 chunk_hooks_t	chunk_hooks_get(arena_t *arena);
 chunk_hooks_t	chunk_hooks_set(arena_t *arena,
     const chunk_hooks_t *chunk_hooks);
@@ -81,6 +84,10 @@ void	chunk_postfork_child(void);
 
 #ifndef JEMALLOC_ENABLE_INLINE
 extent_node_t	*chunk_lookup(const void *chunk, bool dependent);
+
+size_t          rss_get(void);
+void            rss_add(size_t size);
+void            rss_sub(size_t size);
 #endif
 
 #if (defined(JEMALLOC_ENABLE_INLINE) || defined(JEMALLOC_CHUNK_C_))
@@ -89,6 +96,27 @@ chunk_lookup(const void *ptr, bool dependent)
 {
 
 	return (rtree_get(&chunks_rtree, (uintptr_t)ptr, dependent));
+}
+
+JEMALLOC_INLINE size_t
+rss_get(void)
+{
+
+	return (atomic_read_z(&rss));
+}
+
+JEMALLOC_INLINE void
+rss_add(size_t size)
+{
+
+	atomic_add_z(&rss, size);
+}
+
+JEMALLOC_INLINE void
+rss_sub(size_t size)
+{
+
+	atomic_sub_z(&rss, size);
 }
 #endif
 
