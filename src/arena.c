@@ -270,12 +270,13 @@ arena_chunk_dirty_npages(const extent_node_t *node)
 void
 arena_chunk_cache_maybe_insert(arena_t *arena, extent_node_t *node, bool cache)
 {
+        size_t dirty_pages;
 
 	if (cache) {
 		extent_node_dirty_linkage_init(node);
 		extent_node_dirty_insert(node, &arena->runs_dirty,
 		    &arena->chunks_cache);
-		size_t dirty_pages = arena_chunk_dirty_npages(node);
+		dirty_pages = arena_chunk_dirty_npages(node);
 		arena->ndirty += dirty_pages;
 		rss_add(dirty_pages << LG_PAGE);
 	}
@@ -284,11 +285,12 @@ arena_chunk_cache_maybe_insert(arena_t *arena, extent_node_t *node, bool cache)
 void
 arena_chunk_cache_maybe_remove(arena_t *arena, extent_node_t *node, bool dirty)
 {
+        size_t dirty_pages;
 
 	if (dirty) {
 		extent_node_dirty_remove(node);
 		assert(arena->ndirty >= arena_chunk_dirty_npages(node));
-		size_t dirty_pages = arena_chunk_dirty_npages(node);
+		dirty_pages = arena_chunk_dirty_npages(node);
 		arena->ndirty -= dirty_pages;
 		rss_sub(dirty_pages << LG_PAGE);
 	}
