@@ -332,18 +332,11 @@ chunk_alloc_core(arena_t *arena, void *new_addr, size_t size, size_t alignment,
     bool *zero, bool *commit, dss_prec_t dss_prec)
 {
 	void *ret;
-	chunk_hooks_t chunk_hooks = CHUNK_HOOKS_INITIALIZER;
 
 	assert(size != 0);
 	assert((size & chunksize_mask) == 0);
 	assert(alignment != 0);
 	assert((alignment & chunksize_mask) == 0);
-
-	/* Retained. */
-	if ((ret = chunk_recycle(arena, &chunk_hooks,
-	    &arena->chunks_szad_retained, &arena->chunks_ad_retained, false,
-	    new_addr, size, alignment, zero, commit, true)) != NULL)
-		return (ret);
 
 	/* "primary" dss. */
 	if (have_dss && dss_prec == dss_prec_primary && (ret =
@@ -448,14 +441,38 @@ chunk_alloc_default(void *new_addr, size_t size, size_t alignment, bool *zero,
 }
 
 void *
+chunk_alloc_retained(arena_t *arena, chunk_hooks_t *chunk_hooks, void *new_addr,
+	    size_t size, size_t alignment, bool *zero, bool *commit) {
+	void *ret;
+
+	assert(size != 0);
+	assert((size & chunksize_mask) == 0);
+	assert(alignment != 0);
+	assert((alignment & chunksize_mask) == 0);
+
+	/* Retained. */
+	if ((ret = chunk_recycle(arena, chunk_hooks,
+	    &arena->chunks_szad_retained, &arena->chunks_ad_retained, false,
+	    new_addr, size, alignment, zero, commit, true)) != NULL)
+		return (ret);
+
+	return (NULL);
+}
+
+void *
 chunk_alloc_wrapper(arena_t *arena, chunk_hooks_t *chunk_hooks, void *new_addr,
     size_t size, size_t alignment, bool *zero, bool *commit)
 {
 	void *ret;
 
 	chunk_hooks_assure_initialized(arena, chunk_hooks);
-	ret = chunk_hooks->alloc(new_addr, size, alignment, zero, commit,
-	    arena->ind);
+
+	if ((ret = chunk_alloc_retained(arena, chunk_hooks, new_addr,
+			size, alignment, zero, commit)) == NULL) {
+		ret = chunk_hooks->alloc(new_addr, size, alignment, zero, commit,
+			    arena->ind);
+	}
+
 	if (ret == NULL)
 		return (NULL);
 	if (config_valgrind && chunk_hooks->alloc != chunk_alloc_default)
