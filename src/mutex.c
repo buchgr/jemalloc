@@ -96,7 +96,7 @@ malloc_mutex_init(malloc_mutex_t *mutex)
 
 	if (pthread_mutexattr_init(&attr) != 0)
 		return (true);
-	pthread_mutexattr_settype(&attr, MALLOC_MUTEX_TYPE);
+	pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
 	if (pthread_mutex_init(&mutex->lock, &attr) != 0) {
 		pthread_mutexattr_destroy(&attr);
 		return (true);
